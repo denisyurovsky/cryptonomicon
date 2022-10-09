@@ -10,6 +10,7 @@
             >
             <div class="mt-1 relative rounded-md shadow-md">
               <input
+                @focus="error.status = false"
                 v-model="ticker"
                 @keydown.enter="add"
                 type="text"
@@ -18,6 +19,22 @@
                 class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                 placeholder="Например DOGE"
               />
+            </div>
+            <div
+              v-if="suggestedTickers.length"
+              class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
+            >
+              <span
+                v-for="suggestedT in suggestedTickers"
+                @click="add(_, suggestedT)"
+                :key="suggestedT"
+                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+              >
+                {{ suggestedT }}
+              </span>
+            </div>
+            <div v-if="error.status" class="text-sm text-red-600">
+              Такой тикер уже добавлен
             </div>
           </div>
         </div>
@@ -136,24 +153,53 @@ export default {
 
   data() {
     return {
-      ticker: "",
+      ticker: "btc",
       tickers: [],
       sel: null,
-      graph: []
+      graph: [],
+      error: {
+        status: false
+      },
+      allCoins: {}
     };
   },
-
+  mounted() {
+    (async () => {
+      let response = await fetch(
+        "https://min-api.cryptocompare.com/data/all/coinlist?summary=true"
+      );
+      response = await response.json();
+      this.allCoins = response.Data;
+    })();
+  },
+  computed: {
+    suggestedTickers() {
+      const tickers = [];
+      let counter = 0;
+      for (let coin in this.allCoins) {
+        if (
+          this.ticker &&
+          coin.toLowerCase().includes(this.ticker.toLowerCase()) &&
+          counter < 4
+        ) {
+          tickers.push(coin);
+          counter++;
+        }
+      }
+      return tickers;
+    }
+  },
   methods: {
-    add() {
+    registerTicker(name) {
       const currentTicker = {
-        name: this.ticker,
+        name: name,
         price: "-"
       };
 
       this.tickers.push(currentTicker);
       setInterval(async () => {
         const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=`
+          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=5ef920fccf9d02e7c889044af5cd80ec847a35fc09fa2eb82d4ddbc0aaf9040d`
         );
         const data = await f.json();
 
@@ -167,7 +213,26 @@ export default {
       }, 5000);
       this.ticker = "";
     },
+    add(_, t) {
+      if (!t) {
+        t = this.ticker;
+      }
+      t = t.toUpperCase();
 
+      this.error.status = false;
+      this.tickers.forEach(item => {
+        for (let key in item) {
+          if (item[key] == t) {
+            this.error.status = true;
+          }
+        }
+      });
+      if (this.error.status) {
+        return;
+      } else {
+        this.registerTicker(t);
+      }
+    },
     select(ticker) {
       this.sel = ticker;
       this.graph = [];
