@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto flex flex-col items-center p-4">
+  <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
     <div class="container">
       <div class="w-full my-4"></div>
       <section>
@@ -153,7 +153,7 @@ export default {
       this.tickers.push(currentTicker);
       setInterval(async () => {
         const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=ce3fd966e7a1d10d65f907b20bf000552158fd3ed1bd614110baa0ac6cb57a7e`
+          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=72918c99c6c1cb6f20b4bd792e37f9dabd3db700b537e3e59adc722882f9fc84`
         );
         const data = await f.json();
 
@@ -187,3 +187,5 @@ export default {
   }
 };
 </script>
+
+<style src="./app.css"></style>
